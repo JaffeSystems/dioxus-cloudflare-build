@@ -91,9 +91,7 @@ fn find_msvc_link_dir() -> Option<PathBuf> {
                 continue;
             };
             for version in versions.flatten() {
-                let link = version
-                    .path()
-                    .join(r"bin\Hostx64\x64\link.exe");
+                let link = version.path().join(r"bin\Hostx64\x64\link.exe");
                 if link.exists() {
                     if let Some(parent) = link.parent() {
                         candidates.push(parent.to_path_buf());
@@ -115,7 +113,10 @@ fn fix_msvc_path() {
 
 /// Run `cargo build --target wasm32-unknown-unknown -p <crate> [--release]`.
 fn cargo_build(package: &str, release: bool) -> Result<()> {
-    eprintln!("cargo build -p {package}{}", if release { " --release" } else { "" });
+    eprintln!(
+        "cargo build -p {package}{}",
+        if release { " --release" } else { "" }
+    );
 
     let mut cmd = Command::new("cargo");
     cmd.args(["build", "--target", "wasm32-unknown-unknown", "-p", package]);
@@ -123,9 +124,7 @@ fn cargo_build(package: &str, release: bool) -> Result<()> {
         cmd.arg("--release");
     }
 
-    let status = cmd
-        .status()
-        .context("failed to run cargo build")?;
+    let status = cmd.status().context("failed to run cargo build")?;
 
     if !status.success() {
         bail!("cargo build failed with {status}");
@@ -187,7 +186,10 @@ fn generate_shim(package: &str, out_dir: &Path) -> Result<()> {
     if do_classes.is_empty() {
         eprintln!("shim.mjs generated (no Durable Objects detected)");
     } else {
-        eprintln!("shim.mjs generated (Durable Objects: {})", do_classes.join(", "));
+        eprintln!(
+            "shim.mjs generated (Durable Objects: {})",
+            do_classes.join(", ")
+        );
     }
     Ok(())
 }
@@ -213,26 +215,36 @@ fn detect_durable_objects(dts: &str) -> Vec<String> {
     let mut current_class: Option<String> = None;
     let mut has_do_constructor = false;
 
+    // Flush the current class into `result` if it qualifies as a DO.
+    let mut flush = |cls: &Option<String>, is_do: bool| {
+        if let Some(name) = cls {
+            if is_do && !WORKER_INTERNALS.contains(&name.as_str()) {
+                result.push(name.clone());
+            }
+        }
+    };
+
     for line in dts.lines() {
         let trimmed = line.trim();
 
         if let Some(name) = trimmed.strip_prefix("export class ") {
-            // Save previous class if it qualified
-            if let Some(ref cls) = current_class {
-                if has_do_constructor && !WORKER_INTERNALS.contains(&cls.as_str()) {
-                    result.push(cls.clone());
-                }
-            }
+            flush(&current_class, has_do_constructor);
 
-            // Start tracking new class
-            let name = name.split_whitespace().next().unwrap_or_default().to_string();
+            let name = name
+                .split_whitespace()
+                .next()
+                .unwrap_or_default()
+                .to_string();
             current_class = Some(name);
             has_do_constructor = false;
             continue;
         }
 
         // Look for the DO constructor signature within the current class
-        if current_class.is_some() && trimmed.contains("constructor(state:") && trimmed.contains("env:") {
+        if current_class.is_some()
+            && trimmed.contains("constructor(state:")
+            && trimmed.contains("env:")
+        {
             has_do_constructor = true;
         }
 
@@ -242,12 +254,8 @@ fn detect_durable_objects(dts: &str) -> Vec<String> {
         }
     }
 
-    // Don't forget the last class
-    if let Some(ref cls) = current_class {
-        if has_do_constructor && !WORKER_INTERNALS.contains(&cls.as_str()) {
-            result.push(cls.clone());
-        }
-    }
+    // Flush the last class
+    flush(&current_class, has_do_constructor);
 
     result
 }
