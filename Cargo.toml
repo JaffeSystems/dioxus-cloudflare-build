@@ -1,0 +1,28 @@
+[package]
+name = "dioxus-cloudflare-build"
+version = "0.7.0"
+edition = "2021"
+authors = ["Jaffe Systems"]
+description = "Build pipeline for dioxus-cloudflare workers: cargo build + wasm-bindgen + shim generation"
+license = "AGPL-3.0-only"
+repository = "https://github.com/JaffeSystems/dioxus-cloudflare"
+keywords = ["dioxus", "cloudflare", "workers", "wasm", "build-tool"]
+categories = ["wasm", "development-tools::build-utils"]
+
+[[bin]]
+name = "dioxus-cf-build"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "warn"
+dbg_macro = "deny"
+print_stdout = "deny"
+print_stderr = "allow" # CLI build tool — stderr is the correct output channel
+
+[lints.rust]
+unsafe_code = "deny"
