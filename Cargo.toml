@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Jaffe Systems"]
 description = "Build pipeline for dioxus-cloudflare workers: cargo build + wasm-bindgen + shim generation"
 license = "AGPL-3.0-only"
-repository = "https://github.com/JaffeSystems/dioxus-cloudflare"
+repository = "https://github.com/JaffeSystems/dioxus-cloudflare-build"
 keywords = ["dioxus", "cloudflare", "workers", "wasm", "build-tool"]
 categories = ["wasm", "development-tools::build-utils"]
 
@@ -23,6 +23,12 @@ expect_used = "warn"
 dbg_macro = "deny"
 print_stdout = "deny"
 print_stderr = "allow" # CLI build tool — stderr is the correct output channel
+needless_pass_by_value = "warn"
+cloned_instead_of_copied = "warn"
+redundant_closure_for_method_calls = "warn"
+implicit_clone = "warn"
+cast_possible_truncation = "warn"
+cast_sign_loss = "warn"
 
 [lints.rust]
 unsafe_code = "deny"
